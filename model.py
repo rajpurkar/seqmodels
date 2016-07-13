@@ -7,3 +7,6 @@ class Model(object):
 
     def predict(self, x):
         pass
+
+
+class SequenceModel(Model)
