@@ -9,4 +9,5 @@ class Model(object):
         pass
 
 
-class SequenceModel(Model)
+class SequenceModel(Model):
+    pass
