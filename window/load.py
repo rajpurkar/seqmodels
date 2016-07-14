@@ -16,7 +16,7 @@ def get_sequence_windows(
 
     def assign_window_extractions_labels(extractions, labels):
         """Assign window extraction labels."""
-        extraction_labels = np.zeros(len(extractions))
+        extraction_labels = np.zeros(len(extractions), dtype=np.int)
         for index, extraction in enumerate(extractions):
             for label in labels:
                 start_time = extraction[0, X_TIME_COLUMN]
@@ -54,4 +54,4 @@ def get_windows(x_train, y_train, only_positive=False):
                 x_train[index], y_train[index], only_positive)
         windows_x.append(sequence_extractions)
         windows_y.append(sequence_extraction_labels)
-    return windows_x, windows_y
+    return np.array(windows_x), np.array(windows_y)
