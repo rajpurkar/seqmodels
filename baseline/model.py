@@ -3,7 +3,7 @@ from .. import model
 import numpy as np
 
 
-class Simple(model.SequenceModel):
+class Simple(model.Model):
     def __init__(self):
         self.output_length = None
 

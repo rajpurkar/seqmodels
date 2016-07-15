@@ -3,11 +3,41 @@
 
 class Model(object):
     def train(self, x_train, y_train):
-        pass
+        raise NotImplementedError("Please Implement this method")
 
     def predict(self, x):
-        pass
+        raise NotImplementedError("Please Implement this method")
 
 
-class SequenceModel(Model):
-    pass
+class KerasModel(Model):
+    def __init__(self):
+        self.model = None
+
+    def _create_model(self, input_shape, num_categories):
+        """To be implemented by subclass."""
+        raise NotImplementedError("Please Implement this method")
+
+    def train(self, x, y):
+        """Train."""
+        self.model = self._create_model(x[0].shape, y.shape[-1])
+        self.model.compile(
+            loss='categorical_crossentropy',
+            optimizer='adam',
+            metrics=['accuracy']
+        )
+
+        from keras.callbacks import EarlyStopping
+
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10)
+        self.model.fit(
+            x, y,
+            callbacks=[early_stopping],
+            verbose=1,
+            validation_split=0.2,  # last 10% of data
+            shuffle=True,
+            nb_epoch=100,
+        )
+
+    def predict(self, x):
+        """Predict."""
+        return self.model.predict_classes(x)

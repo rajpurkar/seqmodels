@@ -18,7 +18,7 @@ class CombinerModel(model.Model):
         pass
 
 
-class WindowBasedModel(model.SequenceModel):
+class WindowBasedModel(model.Model):
     def __init__(self, frame_model, combiner_model):
         self.frame_model = frame_model
         self.combiner_model = combiner_model
