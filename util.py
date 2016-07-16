@@ -3,10 +3,6 @@ from sklearn.preprocessing import OneHotEncoder
 DEBUG = True
 
 
-def get_labels():
-    return ['Not_tap', 'thumb', 'index', 'middle', 'ring', 'pinkie']
-
-
 def debug(*arg):
     if DEBUG is True:
         print(*arg)

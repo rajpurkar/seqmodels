@@ -10,7 +10,7 @@ class FrameModel(model.Model):
     def evaluate(self, x, y):
         debug('\n')
         debug(classification_report(
-            y, self.predict(x), target_names=get_labels()))
+            y, self.predict(x)))
 
 
 class CombinerModel(model.Model):
