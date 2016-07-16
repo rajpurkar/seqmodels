@@ -1,4 +1,4 @@
-from models import model
+from .. import model
 from . import load
 from ..util import *
 

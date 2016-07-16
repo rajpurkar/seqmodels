@@ -1,5 +1,5 @@
 """Recurrent neural network model."""
-from models.model import KerasModel
+from ...model import KerasModel
 from ..window_model import FrameModel
 
 

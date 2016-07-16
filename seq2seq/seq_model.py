@@ -1,6 +1,6 @@
 import seq2seq
 from seq2seq.models import AttentionSeq2seq
-from models import model
+from .. import model
 from ..util import *
 
 import numpy as np
