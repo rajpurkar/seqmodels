@@ -12,6 +12,7 @@ class Model(object):
 class KerasModel(Model):
     def __init__(self):
         self.model = None
+        self.batch_size = 32
 
     def _create_model(self, input_shape, num_categories):
         """To be implemented by subclass."""
@@ -33,11 +34,12 @@ class KerasModel(Model):
             x, y,
             callbacks=[early_stopping],
             verbose=1,
-            validation_split=0.2,  # last 10% of data
+            validation_split=0.1,  # last 10% of data
             shuffle=True,
             nb_epoch=100,
+            batch_size=self.batch_size
         )
 
     def predict(self, x):
         """Predict."""
-        return self.model.predict_classes(x)
+        return self.model.predict_classes(x, batch_size=self.batch_size)
