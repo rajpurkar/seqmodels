@@ -1,4 +1,5 @@
 from .model import *
+from .load import *
 from .window.window_model import CombinerModel, WindowBasedModel
 from .window.frame_models.recurrent import RecurrentModel
 from .seq2seq.seq_model import Sequence2SequenceModel

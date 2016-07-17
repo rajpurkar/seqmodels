@@ -1,4 +1,5 @@
 Keras==1.0.5
+joblib==0.10.0
 numpy==1.11.1
 PyYAML==3.11
 scikit-learn==0.17.1
