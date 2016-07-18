@@ -2,7 +2,7 @@
 import os
 import joblib
 import sklearn.cross_validation
-
+from .util import *
 
 class Loader(object):
     """Load a dataset created with the dataset collection pipeline.
@@ -11,7 +11,7 @@ class Loader(object):
         self.x_train = self.x_test = self.y_train = self._y_test = None
         self.processor = processor
         self.RANDOM_SEED = 2
-        self._load(data_folder, use_cached_if_available=True)
+        self._load(data_folder, use_cached_if_available)
 
     def _load(self, data_folder, use_cached_if_available):
         """Run the pipeline to load the dataset.
@@ -30,11 +30,13 @@ class Loader(object):
             joblib.dump(loaded, cached_filename)
 
         if use_cached_if_available and check_cached_copy():
+            debug("Using cached copy of dataset...")
             loaded = load_cached()
         else:
+            debug("Loading dataset (not stored in cache)...")
             processed = self.processor.load_xy_pairs(data_folder)
             loaded = self._train_test(processed)
-
+            debug("Saving to cache... (this may take some time)")
             save_loaded(loaded)
 
 
