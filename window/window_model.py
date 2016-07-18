@@ -1,6 +1,7 @@
 from .. import model
 from ..util import *
 
+from tqdm import tqdm
 from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 
@@ -23,10 +24,11 @@ class WindowBasedModel(model.Model):
         self.combiner_model = combiner_model
         self.output_length = None
         self.window_size = None
+        self.stride = None
         
-        self.left_epsilon=0.15
-        self.right_epsilon=0.15
-        self.only_positive=False
+        self.left_epsilon=0.05
+        self.right_epsilon=0.05
+        self.only_positive=True
         self.X_TIME_COLUMN=2
         self.Y_TIME_COLUMN=1
         
@@ -42,7 +44,7 @@ class WindowBasedModel(model.Model):
 
         debug('Window X shape: ', windows_x.shape)
         debug('Window Y shape: ', windows_y.shape)
-
+        
         flat_x, flat_y = flatten(windows_x), flatten(windows_y)
         flat_y_one_hot = one_hot_encode_y(flat_y)
 
@@ -59,51 +61,61 @@ class WindowBasedModel(model.Model):
     def predict(self, x):
         return np.ones((len(x), 6))
 
-    def get_sequence_windows(self, sequence, labels):
+    def get_windows_for_sequence(self, sequence, labels):
         """Get sliding window extractions and labels."""
-        def assign_window_extractions_labels(extractions, labels):
-            """Assign window extraction labels."""
-            extraction_labels = np.zeros(len(extractions), dtype=np.int)
-            for index, extraction in enumerate(extractions):
-                for label in labels:
-                    start_time = extraction[0, self.X_TIME_COLUMN]
-                    end_time = extraction[-1, self.X_TIME_COLUMN]
-                    label_time = label[self.Y_TIME_COLUMN]
-                    if(label_time - start_time > self.left_epsilon and
-                       end_time - label_time > self.right_epsilon):
-                            extraction_labels[index] = int(label[0])
-            return extraction_labels
+        extractions = np.array([sequence[i: i + self.window_size, :] for i in \
+            range(0, len(sequence) - self.window_size + 1, self.stride)])
+        
+        extraction_labels = np.zeros(len(extractions), dtype=np.int)
+        for index, extraction in enumerate(extractions):
+            start_time = extraction[0, self.X_TIME_COLUMN]
+            end_time = extraction[-1, self.X_TIME_COLUMN]
+            labels_time =labels[:, self.Y_TIME_COLUMN]
+            mask = np.logical_and(labels_time - start_time > self.left_epsilon,
+                                  end_time - labels_time > self.right_epsilon)
+            label = np.flatnonzero(mask)
+            if len(label) > 1:
+                raise Warning("Overlapping labels. Reduce Epsilon boundaries")
+            if len(label) == 1:
+                extraction_labels[index] = label[0]
 
-        def auto_set_window_size(sequence):
-            threshold = (self.left_epsilon + self.right_epsilon) * 3 / 4
-            time_arr = sequence[:, self.X_TIME_COLUMN]
-            self.window_size = np.argmax(time_arr > threshold)
-
-        def sliding_window_extractions(sequence):
-            """Sliding window extraction."""
-            length = len(sequence)
-            extractions = []
-            if self.window_size is None:
-                auto_set_window_size(sequence)
-            for i in range(length - self.window_size + 1):
-                extraction = sequence[i: i + self.window_size, :]
-                extractions.append(extraction)
-            return np.array(extractions)
-
-        extractions = sliding_window_extractions(sequence)
-        extraction_labels = assign_window_extractions_labels(extractions, labels)
+        # Add check to make sure all labels have corresponding window
         if self.only_positive:
             extractions = extractions[extraction_labels > 0]
             extraction_labels = extraction_labels[extraction_labels > 0]
+
         return extractions, extraction_labels
 
     def get_windows(self, x_train, y_train):
         """Get sequence extraction pairs."""
+
+        def roundMultiple(x, base=4):
+            """Round n up to nearest multiple of base."""
+            return int(base * round(float(x)/base))
+
+        def auto_set_stride():
+            self.stride = roundMultiple(
+                int(self.window_size / 10), base=2)
+            debug("Stride auto set to ", self.stride)
+
+        def auto_set_window_size(sequence):
+            threshold = (self.left_epsilon + self.right_epsilon) * 2
+            time_arr = sequence[:, self.X_TIME_COLUMN]
+            self.window_size = roundMultiple(
+                np.argmax(time_arr > threshold), base=4)
+            debug("Window size auto set to ", self.window_size)
+
         windows_x = []
         windows_y = []
-        for index in range(len(x_train)):
+        debug("Making windows...")
+        if self.window_size is None:
+            auto_set_window_size(x_train[0])
+        if self.stride is None:
+            auto_set_stride()
+
+        for index in tqdm(range(len(x_train))):
             sequence_extractions, sequence_extraction_labels = \
-                self.get_sequence_windows(
+                self.get_windows_for_sequence(
                     x_train[index], y_train[index])
             windows_x.append(sequence_extractions)
             windows_y.append(sequence_extraction_labels)
