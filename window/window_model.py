@@ -26,11 +26,11 @@ class WindowBasedModel(model.Model):
         self.window_size = None
         self.stride = None
         
-        self.left_epsilon=0.05
-        self.right_epsilon=0.05
-        self.only_positive=True
-        self.X_TIME_COLUMN=2
-        self.Y_TIME_COLUMN=1
+        self.left_epsilon=None
+        self.right_epsilon=None
+        self.only_positive=None
+        self.X_TIME_COLUMN=None
+        self.Y_TIME_COLUMN=None
         
         assert(isinstance(self.frame_model, FrameModel))
         assert(isinstance(self.combiner_model, CombinerModel))
