@@ -66,23 +66,30 @@ class WindowBasedModel(model.Model):
         extractions = np.array([sequence[i: i + self.window_size, :] for i in \
             range(0, len(sequence) - self.window_size + 1, self.stride)])
         
-        extraction_labels = np.zeros(len(extractions), dtype=np.int)
+        extraction_labels = np.zeros(len(extractions), dtype=np.int) - 1
+
+        def get_non_zero_mask(left, right):
+            mask = np.logical_and(labels_time - start_time > left,
+                                  end_time - labels_time > right)
+            label = np.flatnonzero(mask)
+            return label
+
         for index, extraction in enumerate(extractions):
             start_time = extraction[0, self.X_TIME_COLUMN]
             end_time = extraction[-1, self.X_TIME_COLUMN]
-            labels_time =labels[:, self.Y_TIME_COLUMN]
-            mask = np.logical_and(labels_time - start_time > self.left_epsilon,
-                                  end_time - labels_time > self.right_epsilon)
-            label = np.flatnonzero(mask)
+            labels_time = labels[:, self.Y_TIME_COLUMN]
+            label = get_non_zero_mask(self.left_epsilon, self.right_epsilon)
             if len(label) > 1:
                 raise Warning("Overlapping labels. Reduce Epsilon boundaries")
-            if len(label) == 1:
+            elif len(label) == 1:
                 extraction_labels[index] = label[0]
-
-        # Add check to make sure all labels have corresponding window
-        if self.only_positive:
-            extractions = extractions[extraction_labels > 0]
-            extraction_labels = extraction_labels[extraction_labels > 0]
+            elif len(label) == 0:
+                if not self.only_positive:
+                    if len(get_non_zero_mask(-self.right_epsilon, -self.left_epsilon)) == 0:
+                        extraction_labels[index] = 0
+        
+        extractions = extractions[extraction_labels > -1]
+        extraction_labels = extraction_labels[extraction_labels > -1]
 
         return extractions, extraction_labels
 
